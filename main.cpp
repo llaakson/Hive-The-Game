@@ -1,6 +1,4 @@
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include <cmath>
+#include "Hive.hpp"
 
 int main() {
     const float radius = 40.f;
