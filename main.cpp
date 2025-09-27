@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include "Hive.hpp"
 
 int main() {
     const float radius = 40.f;
