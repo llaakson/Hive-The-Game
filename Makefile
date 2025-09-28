@@ -6,7 +6,7 @@ FLAGS := -Wall -Wextra -Werror -std=c++17
 
 SFML_LIBS := -lsfml-graphics -lsfml-window -lsfml-system -pthread
 
-SOURCE := main.cpp
+SOURCE := test.cpp
 OBJ := $(SOURCE:.cpp=.o)
 HEADERS := Hive.hpp
 

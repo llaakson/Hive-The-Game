@@ -8,4 +8,6 @@ class Tile
 		bool isPlaced = false;
 		Tile();
 		virtual ~Tile();
+		Player owner;
+		//add a lock - if locked, piece cannot be moved
 }

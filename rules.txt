@@ -1,0 +1,23 @@
+1. One Hive Rule:
+- check that hive is still a single connected group
+- graph connectivity
+
+2. Freedom to move rule:
+- a piece can only slide if it can more between neighbours without squeezing through a 1-hex gap (beetles are an exception - they can climb)
+- check adjacent occupied hexes
+
+3. Placement rules:
+- first turn: anywhere
+- later turns (placement): must place adjacent to own pieces, not opponents;
+- queen must be placed between turns 2 - 4
+
+4. Piece-specific movement rules:
+- Queen: 1 step to any adjacent hex 
+- Beetle: 1 step, but can climb onto other pieces
+- Spider: exactly 3 steps, no backtracking
+- Grasshopper: jump over straight line of pieces until first empty space
+- Ant: slide unlimited spaces around Hive perimeter
+- Ladybug: moves three spaces, two on the top of hive and one down
+- Pillbug: moves one space at a time, but can also move an adjacent piece two spaces: one on the top of itself and one into another empty field next to itself
+- Mosquito: takes on movement characteristics of any creature it touches
+
