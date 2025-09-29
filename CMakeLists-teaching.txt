@@ -1,0 +1,200 @@
+# ============================================================================
+# CMakeLists.txt — Hive (SFML) — TEACHING VERSION
+# ---------------------------------------------------------------------------
+# This file is *intentionally* verbose. It explains what each directive does,
+# common gotchas, and how to adapt the script for different platforms/tools.
+# If you're new to CMake, skim the section headers first, then read comments
+# inline as needed. You can safely trim comments later for a leaner build file.
+# ============================================================================
+
+# ---- 1) CMake version & project metadata -----------------------------------
+# Minimum version: choose something reasonably modern to get nice features
+# (generator expressions, modern target properties, etc.).
+cmake_minimum_required(VERSION 3.16)
+
+# 'project()' sets global metadata used by CMake/IDEs, and declares languages.
+# LANGUAGES CXX means we only compile C++ (no C/Objective‑C/Fortran).
+project(HiveTheGame LANGUAGES CXX)
+
+# ---- 2) C++ standard & general compilation behavior ------------------------
+# Enforce C++17 (change to 20/23 if you use newer language features).
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)  # error if compiler can't do C++17
+set(CMAKE_CXX_EXTENSIONS OFF)        # use -std=c++17 (not compiler-specific gnu++17)
+
+# Show more warnings. Different compilers use different flags, so we branch.
+if (MSVC) # Microsoft Visual C++ (cl.exe) on Windows
+    # /W4 is a good default; /permissive- enforces standard-conformance.
+    add_compile_options(/W4 /permissive-)
+else()    # GCC, Clang, AppleClang
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# ---- 3) Options users can toggle at configure time -------------------------
+# Use as: cmake -S . -B build -DSFML_STATIC=ON
+option(SFML_STATIC "Link SFML statically (common on Windows static builds)" OFF)
+
+# On Windows, static SFML needs this macro or link will fail (it flips import/export logic).
+if (SFML_STATIC)
+    add_definitions(-DSFML_STATIC)
+endif()
+
+# Optional: enable address sanitizer for debug builds (Linux/Clang/GCC).
+# Turn on with -DHIVE_USE_ASAN=ON (only affects non-MSVC by default).
+option(HIVE_USE_ASAN "Enable AddressSanitizer in Debug for GCC/Clang" OFF)
+if (HIVE_USE_ASAN AND NOT MSVC)
+    message(STATUS "ASAN: enabled for Debug builds")
+    add_link_options("$<$<CONFIG:Debug>:-fsanitize=address>")
+    add_compile_options("$<$<CONFIG:Debug>:-fsanitize=address>" "$<$<CONFIG:Debug>:-fno-omit-frame-pointer>")
+endif()
+
+# ---- 4) Source files & target creation -------------------------------------
+# Prefer listing sources explicitly; it is robust for IDEs and incremental builds.
+# You *can* also glob (see Section 9) but explicit lists are recommended.
+set(HIVE_SOURCES
+    main.cpp
+    Hive.cpp
+)
+set(HIVE_HEADERS
+    Hive.hpp
+)
+
+# 'add_executable' defines a build target. The name 'hive' results in a binary
+# 'hive' (Linux/macOS) or 'hive.exe' (Windows). You can change the name safely.
+add_executable(hive ${HIVE_SOURCES} ${HIVE_HEADERS})
+
+# IDE nicety: organize files into "folders" in Visual Studio/Xcode generators.
+# This does nothing on Makefiles/Ninja but improves IDE structure.
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${HIVE_SOURCES} ${HIVE_HEADERS})
+
+# ---- 5) Finding SFML --------------------------------------------------------
+# We ask CMake to locate SFML (>=2.5). If it cannot, configuration will fail
+# with a clear error telling you how to point CMake at SFML.
+#
+# How CMake finds packages (search order, variables, hints):
+#   - If you installed SFML via a package manager (apt, brew, vcpkg), the
+#     package usually installs a config file that CMake can find.
+#   - You can hint CMake: -DSFML_DIR=/path/to/SFML/lib/cmake/SFML
+#   - With vcpkg, either set VCPKG_ROOT + CMAKE_TOOLCHAIN_FILE, or use
+#     'cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake'
+#     (then 'find_package' will just work).
+#
+# Components requested below match typical SFML usage (system, window, graphics,
+# audio). Remove 'audio' if you don't use it to speed link and reduce deps.
+find_package(SFML 2.5 REQUIRED COMPONENTS system window graphics audio)
+
+# Link our target against the SFML targets exposed by the package.
+# These names are standard for SFML's CMake package.
+target_link_libraries(hive PRIVATE
+    sfml-graphics
+    sfml-window
+    sfml-system
+    sfml-audio
+)
+
+# If you have headers using '#include <SFML/...>', linkage is sufficient; no
+# need to also call 'target_include_directories' because the imported SFML
+# targets propagate their include dirs via INTERFACE_INCLUDE_DIRECTORIES.
+
+# ---- 6) Runtime output location --------------------------------------------
+# By default, single-config generators (Unix Makefiles/Ninja) place binaries
+# in the build directory. We set a fixed 'bin' folder for clarity.
+# On multi-config IDEs (MSVC), each configuration gets a subfolder.
+set_target_properties(hive PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/bin/Debug"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/Release"
+)
+
+# ---- 7) Game assets: copy next to the executable on build -------------------
+# Many SFML games load assets relative to the executable's working directory.
+# We list assets and copy them after every successful build so running the
+# program from the build tree "just works". Add to this list as you grow.
+set(HIVE_ASSETS
+    arial.ttf
+    tileset.png
+)
+
+# Utility function: copy an asset after building 'hive' (only if it exists).
+foreach(asset IN LISTS HIVE_ASSETS)
+    if (EXISTS "${CMAKE_SOURCE_DIR}/${asset}")
+        add_custom_command(TARGET hive POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${CMAKE_SOURCE_DIR}/${asset}"
+                    "$<TARGET_FILE_DIR:hive>/${asset}"
+            COMMENT "Copying asset: ${asset}"
+        )
+    else()
+        message(WARNING "Listed asset does not exist: ${asset}")
+    endif()
+endforeach()
+
+# ---- 8) Install rules (optional but nice) -----------------------------------
+# 'cmake --install build' copies your game and (optionally) assets to a simple
+# directory structure under CMAKE_INSTALL_PREFIX (default: /usr/local on Linux,
+# 'Program Files' on Windows if using installers, or a custom folder you set).
+include(GNUInstallDirs) # standard install dirs like bin/, share/, etc.
+
+# Install the executable
+install(TARGETS hive RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Install assets to a shared resource directory:
+# Resulting structure: <prefix>/share/hive/assets/...
+set(HIVE_ASSET_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/hive/assets")
+foreach(asset IN LISTS HIVE_ASSETS)
+    if (EXISTS "${CMAKE_SOURCE_DIR}/${asset}")
+        install(FILES "${CMAKE_SOURCE_DIR}/${asset}" DESTINATION "${HIVE_ASSET_INSTALL_DIR}")
+    endif()
+endforeach()
+
+# ---- 9) Optional: glob sources automatically (OFF by default) --------------
+# GLOBbing is convenient but has a caveat: adding new files won't retrigger
+# CMake configure unless you re-run it. Explicit lists are safer for teams.
+option(HIVE_USE_GLOB "Automatically pick up *.cpp/*.hpp without editing CMake" OFF)
+if (HIVE_USE_GLOB)
+    file(GLOB_RECURSE HIVE_ALL_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/*.cpp"
+        "${CMAKE_SOURCE_DIR}/*.hpp" "${CMAKE_SOURCE_DIR}/*.h"
+    )
+    # Replace previously added sources.
+    set_property(TARGET hive PROPERTY SOURCES "${HIVE_ALL_SOURCES}")
+endif()
+
+# ---- 10) Optional: a 'run' convenience target -------------------------------
+# Lets you type 'cmake --build build --target run' (or 'ninja run') to launch
+# the game from the correct working directory. Not available in Visual Studio's
+# IDE button, but useful from CLI.
+add_custom_target(run
+    COMMAND "$<TARGET_FILE:hive>"
+    DEPENDS hive
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:hive>"
+    COMMENT "Running Hive from $<TARGET_FILE_DIR:hive>"
+)
+
+# ---- 11) Notes for common setups -------------------------------------------
+# a) vcpkg (Windows/Linux/macOS):
+#    - bootstrap vcpkg and 'vcpkg install sfml'
+#    - configure with: -DCMAKE_TOOLCHAIN_FILE=<vcpkg>/scripts/buildsystems/vcpkg.cmake
+#    - then 'find_package(SFML ...)' works out of the box.
+#
+# b) Homebrew (macOS):
+#    - 'brew install sfml'
+#    - CMake usually finds it automatically. If not, pass:
+#      -DSFML_DIR=$(brew --prefix)/opt/sfml/lib/cmake/SFML
+#
+# c) Linux (apt/dnf/pacman):
+#    - install 'libsfml-dev' (or distro equivalent). CMake should find it.
+#
+# d) Manual SFML build:
+#    - Build SFML with CMake, then set SFML_DIR to the folder containing the
+#      'SFMLConfig.cmake' file (like <SFML>/lib/cmake/SFML).
+#
+# e) Static linking on Windows:
+#    - Turn on -DSFML_STATIC=ON, ensure you installed static SFML libs, and link
+#      the extra dependencies SFML requires (the SFML CMake package does this
+#      for you when using its imported targets, so usually no extra work here).
+#
+# Final tip: treat targets like "objects with properties." Always prefer
+# target_* commands (target_link_libraries, target_compile_definitions, etc.)
+# over setting directory-wide/global flags. It's clearer and scales for teams.
+# ============================================================================
