@@ -1,11 +1,24 @@
 #include "Hive.hpp"
 
+constexpr int cols = 10;
+constexpr int rows = 5;
+
 struct HexCell
 {
 	int q; // horizontal axis
 	int r; // diagonal axis
 	sf::CircleShape shape; //visual representation
 	bool selected = false;
+	sf::Color color = sf::Color(255,255,255);
+	bool is_piece = false;
+
+	//matrix goordinates
+	int x;
+	int y;
+};
+
+struct StoredColor {
+	sf::Color color = sf::Color(255,255,255);
 };
 
 sf::Vector2f hexToPixelOffset(int col, int row, float radius) {
@@ -47,13 +60,24 @@ bool pointInHex(const sf::CircleShape& hex, sf::Vector2f point)
     return inside;
 }
 
+void print_game_matrix(std::array<std::array<int,cols>, rows> game_matrix)
+{
+	for (size_t i = 0; i < game_matrix.size(); ++i) {
+        for (size_t j = 0; j < game_matrix[i].size(); ++j) {
+            std::cout << game_matrix[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 int main() 
 {
     const float radius = 40.f;
-    const int cols = 10;
-    const int rows = 5;
+    //const int cols = 10; // moved top of the file to be globals for the print function
+    //const int rows = 5;
+    std::array<std::array<int,cols>, rows> game_matrix = {0};
 
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Hive");
+    sf::RenderWindow window(sf::VideoMode(900, 600), "Hive");
 
     // generating grid based on columns and rows
     std::vector<HexCell> cells;
@@ -100,10 +124,12 @@ int main()
 
             cell.shape = sf::CircleShape(radius, 6);
             cell.shape.setRotation(30); // flat-topped
-            cell.shape.setFillColor(sf::Color(200, 200, 255));
+            cell.shape.setFillColor(sf::Color(255, 255, 255));
             cell.shape.setOutlineThickness(-2);
             cell.shape.setOutlineColor(sf::Color::Black);
-
+		
+	    cell.x = row;
+	    cell.y = col;
             sf::Vector2f pos = positions[idx++];
             pos.x += offsetX;
             pos.y += offsetY;
@@ -113,7 +139,36 @@ int main()
         }
     }
 
+     HexCell cell;
+     cell.shape = sf::CircleShape(radius, 6);
+     cell.shape.setRotation(30); // flat-topped
+     cell.shape.setFillColor(sf::Color(0, 0, 255));
+     cell.color = sf::Color(0,0,255);
+     cell.shape.setOutlineThickness(-2);
+     cell.shape.setOutlineColor(sf::Color::Black);
+
+     sf::Vector2f pos = positions[idx++];
+     pos.x += 50;
+     pos.y += 50;
+     cell.shape.setPosition(pos);
+     cell.is_piece = true;
+     cells.push_back(cell);
+     cell.shape = sf::CircleShape(radius, 6);
+     cell.shape.setRotation(30); // flat-topped
+     cell.shape.setFillColor(sf::Color(0, 255, 0));
+     cell.color = sf::Color(0,255,0);
+     cell.shape.setOutlineThickness(-2);
+     cell.shape.setOutlineColor(sf::Color::Black);
+
+     //sf::Vector2f pos = positions[idx++];
+     pos.x += 50;
+     pos.y += 70;
+     cell.shape.setPosition(pos);
+     cell.is_piece = true;
+     cells.push_back(cell);
+
 // main loop
+    StoredColor storedcolor;
     while (window.isOpen()) 
     {
         sf::Event event;
@@ -130,9 +185,19 @@ int main()
 		{
                     if (pointInHex(cell.shape, mousePos)) 
 		    {
+			if (cell.is_piece == true)
+				storedcolor.color = cell.color;
+			else if (cell.color == sf::Color::White)
+			{
+			cell.color = storedcolor.color;
                         cell.selected = !cell.selected;
-                        std::cout << "Clicked hex q=" << cell.q << " r=" << cell.r
-                                  << " (s=" << -cell.q - cell.r << ")\n";
+                        std::cout << "Clicked hex q=" << cell.q << " r=" << cell.r << " (s=" << -cell.q - cell.r << ")\n";
+			cell.shape.setFillColor(cell.color);
+			storedcolor.color = sf::Color(255,255,255);
+			game_matrix[cell.x][cell.y] = 'B'; // testing to update game matrix when piece is placed
+			//cell.is_piece = true; // cell now has a game piece on it
+			print_game_matrix(game_matrix);
+			}
                     }
                 }
             }
@@ -141,8 +206,8 @@ int main()
         window.clear(sf::Color::White);
         for (auto& cell : cells) 
 	{
-            cell.shape.setFillColor(cell.selected ? sf::Color::Yellow
-                                                  : sf::Color(200, 200, 255));
+            //cell.shape.setFillColor(cell.selected ? sf::Color::Yellow
+             //                                     : sf::Color(200, 200, 255));
             window.draw(cell.shape);
         }
         window.display();
