@@ -4,6 +4,7 @@
 
 constexpr int cols = 10;
 constexpr int rows = 5;
+int turn_counter = 0;
 
 struct HexCell
 {
@@ -77,6 +78,38 @@ void print_game_matrix(std::array<std::array<int,cols>, rows> game_matrix)
     }
 }
 
+bool isFirstPiece(sf::Color playerColor, const std::vector<HexCell>& cells) 
+{
+    for (const auto& c : cells) 
+    {
+        if (c.is_piece && !c.permanent && c.color == playerColor)
+            return false;
+    }
+    return true;
+}
+
+bool hasSameColorNeighbour(HexCell& cell, std::vector<HexCell>& cells, sf::Color playerColor)
+{
+	for (auto [dq, dr] : HEX_DIRECTIONS)
+	{
+		int nq = cell.q + dq;
+		int nr = cell.r + dr;
+
+		for (const auto& neighbor : cells)
+		{
+			if (neighbor.q == nq && neighbor.r == nr)
+			{
+				if (neighbor.is_piece && neighbor.color == playerColor)
+				{
+					std::cout << "same color as neighbour!\n";
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
 int main() 
 {
     const float radius = 40.f;
@@ -127,7 +160,7 @@ int main()
 
             // Convert offset coords to axial coordinates for Hive logic
             cell.q = col - row / 2;
-            cell.r = row;
+	    cell.r = row;
 
             cell.shape = sf::CircleShape(radius, 6);
             cell.shape.setRotation(30); // flat-topped
@@ -201,25 +234,31 @@ int main()
 				storedcolor.oldpiece = &cell;
 
 			}
-			else if (cell.color == sf::Color::White)
+			// all conditions checks are happening here
+			else if (cell.color == sf::Color::White && storedcolor.color != sf::Color::White)
 			{
-			cell.color = storedcolor.color;
-                        cell.selected = !cell.selected;
-                        std::cout << "Clicked hex q=" << cell.q << " r=" << cell.r << " (s=" << -cell.q - cell.r << ")\n";
-			cell.shape.setFillColor(cell.color);
-			cell.piece_type = storedcolor.piece_type;
-			storedcolor.color = sf::Color(255,255,255);
-			storedcolor.piece_type = 0;
-			game_matrix[cell.x][cell.y] = cell.piece_type; // testing to update game matrix when piece is placed
-			if (cell.color != sf::Color::White)
-				cell.is_piece = true; // cell now has a game piece on it
-			if (storedcolor.oldpiece->permanent == false){
-			storedcolor.oldpiece->color = sf::Color::White;
-			storedcolor.oldpiece->piece_type = 0;
-			storedcolor.oldpiece->is_piece = false;
-			storedcolor.oldpiece->shape.setFillColor(sf::Color::White);
-			game_matrix[storedcolor.oldpiece->x][storedcolor.oldpiece->y] = storedcolor.oldpiece->piece_type;
-			print_game_matrix(game_matrix);}
+				if (isFirstPiece(storedcolor.color, cells) || hasSameColorNeighbour(cell, cells, storedcolor.color))
+				{
+				cell.color = storedcolor.color;
+                        	cell.selected = !cell.selected;
+                        	std::cout << "Clicked hex q=" << cell.q << " r=" << cell.r << " (s=" << -cell.q - cell.r << ")\n";
+				cell.shape.setFillColor(cell.color);
+				cell.piece_type = storedcolor.piece_type;
+				storedcolor.color = sf::Color(255,255,255);
+				storedcolor.piece_type = 0;
+				game_matrix[cell.x][cell.y] = cell.piece_type; // testing to update game matrix when piece is placed
+				if (cell.color != sf::Color::White)
+					cell.is_piece = true; // cell now has a game piece on it
+				if (storedcolor.oldpiece->permanent == false){
+				storedcolor.oldpiece->color = sf::Color::White;
+				storedcolor.oldpiece->piece_type = 0;
+				storedcolor.oldpiece->is_piece = false;
+				storedcolor.oldpiece->shape.setFillColor(sf::Color::White);
+				game_matrix[storedcolor.oldpiece->x][storedcolor.oldpiece->y] = storedcolor.oldpiece->piece_type;
+				print_game_matrix(game_matrix);}
+				}
+				else std::cout << "Place next to the same color!\n";
+				turn_counter++;
 			}
                     }
                 }
