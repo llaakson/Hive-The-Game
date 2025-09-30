@@ -1,4 +1,6 @@
 #include "Hive.hpp"
+//#include "Tile.hpp"
+//#include "Queen.hpp"
 
 constexpr int cols = 10;
 constexpr int rows = 5;
@@ -15,10 +17,15 @@ struct HexCell
 	//matrix goordinates
 	int x;
 	int y;
+	int piece_type = 0;
+	
+	bool permanent = false;
 };
 
 struct StoredColor {
 	sf::Color color = sf::Color(255,255,255);
+	int piece_type = 0;
+	HexCell *oldpiece;
 };
 
 sf::Vector2f hexToPixelOffset(int col, int row, float radius) {
@@ -146,6 +153,8 @@ int main()
      cell.color = sf::Color(0,0,255);
      cell.shape.setOutlineThickness(-2);
      cell.shape.setOutlineColor(sf::Color::Black);
+     cell.piece_type = 1;
+     cell.permanent = true;
 
      sf::Vector2f pos = positions[idx++];
      pos.x += 50;
@@ -165,6 +174,7 @@ int main()
      pos.y += 70;
      cell.shape.setPosition(pos);
      cell.is_piece = true;
+     cell.piece_type = 2;
      cells.push_back(cell);
 
 // main loop
@@ -185,18 +195,31 @@ int main()
 		{
                     if (pointInHex(cell.shape, mousePos)) 
 		    {
-			if (cell.is_piece == true)
+			if (cell.is_piece == true){
+				storedcolor.piece_type = cell.piece_type;
 				storedcolor.color = cell.color;
+				storedcolor.oldpiece = &cell;
+
+			}
 			else if (cell.color == sf::Color::White)
 			{
 			cell.color = storedcolor.color;
                         cell.selected = !cell.selected;
                         std::cout << "Clicked hex q=" << cell.q << " r=" << cell.r << " (s=" << -cell.q - cell.r << ")\n";
 			cell.shape.setFillColor(cell.color);
+			cell.piece_type = storedcolor.piece_type;
 			storedcolor.color = sf::Color(255,255,255);
-			game_matrix[cell.x][cell.y] = 'B'; // testing to update game matrix when piece is placed
-			//cell.is_piece = true; // cell now has a game piece on it
-			print_game_matrix(game_matrix);
+			storedcolor.piece_type = 0;
+			game_matrix[cell.x][cell.y] = cell.piece_type; // testing to update game matrix when piece is placed
+			if (cell.color != sf::Color::White)
+				cell.is_piece = true; // cell now has a game piece on it
+			if (storedcolor.oldpiece->permanent == false){
+			storedcolor.oldpiece->color = sf::Color::White;
+			storedcolor.oldpiece->piece_type = 0;
+			storedcolor.oldpiece->is_piece = false;
+			storedcolor.oldpiece->shape.setFillColor(sf::Color::White);
+			game_matrix[storedcolor.oldpiece->x][storedcolor.oldpiece->y] = storedcolor.oldpiece->piece_type;
+			print_game_matrix(game_matrix);}
 			}
                     }
                 }
