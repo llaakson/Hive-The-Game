@@ -93,6 +93,29 @@ HexCell* Board::getCellAt(sf::Vector2f mousePos)
 	return nullptr;
 }
 
+HexCell* Board::getCellAtAxial(int q, int r)
+{
+	for (auto& cell : cells)
+	{
+		if (cell.q == q && cell.r == r)
+			return &cell;
+	}
+	return nullptr;
+}
+
+std::vector<HexCell*> Board::getNeighbours(const HexCell& cell)
+{
+	std::vector<HexCell*> neighbours;
+	for (auto [dq, dr] : HEX_DIRECTIONS)
+	{
+		int nq = cell.q + dq;
+		int nr = cell.r + dr;
+		if (HexCell* neighbour = getCellAtAxial(nq, nr))
+			neighbours.push_back(neighbour);
+	}
+	return neighbours;
+}
+
 void Board::printMatrix() const
 {
 	for (int i = 0; i < rows; i++)

@@ -20,4 +20,5 @@ class Engine
 		int currentIndex;
 		Player& currentPlayer();
 		void nextTurn();
+		TileType selected;
 };

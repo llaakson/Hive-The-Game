@@ -2,11 +2,12 @@
 #include <iostream>
 
 Engine::Engine(sf::RenderWindow& window) 
-    : window(window), 
-      board(5, 10, 40.f, window), 
-      player1(sf::Color::Blue),
-      player2(sf::Color::Green),
-      currentIndex(0)
+	: window(window), 
+	board(5, 10, 40.f, window), 
+	player1(sf::Color::Blue),
+	player2(sf::Color::Green),
+	currentIndex(0),
+	selected(TileType::QUEEN)
 {}
 
 Player& Engine::currentPlayer() 
@@ -21,23 +22,99 @@ void Engine::nextTurn()
 
 void Engine::handleEvent(const sf::Event& event)
 {
+	if (event.type == sf::Event::KeyPressed)
+	{
+		switch(event.key.code)
+		{
+			case sf::Keyboard::Num1:
+				selected = TileType::QUEEN;
+				std::cout << "choice: QUEEN\n";
+				break;
+			case sf::Keyboard::Num2:
+				selected = TileType::BEETLE;
+				std::cout << "choice: BEETLE\n";
+				break;
+			case sf::Keyboard::Num3:
+				selected = TileType::SPIDER;
+				std::cout << "choice: SPIDER\n";
+				break;
+			case sf::Keyboard::Num4:
+				selected = TileType::ANT;
+				std::cout << "choice: ANT\n";
+				break;
+			case sf::Keyboard::Num5:
+				selected = TileType::GRASSHOPPER;
+				std::cout << "choice: GRASSHOPPER\n";
+				break;
+			default: break;
+		}
+	}
 	if (event.type == sf::Event::MouseButtonPressed) 
 	{
 		sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 		HexCell* clicked = board.getCellAt(mousePos);
-		if (clicked) 
+		if (!clicked)
+			return;
+		if (clicked->is_piece)
 		{
-			if (currentPlayer().hasAvailable(TileType::QUEEN)) 
+			std::cout << "already taken\n";
+			return;
+		}
+		
+		if (!currentPlayer().hasAvailable(selected))
+		{
+			std::cout << "not available anymore\n";
+			return;
+		}
+		bool firstMove = true;
+		for (auto& c : board.getCells())
+		{
+			if (c.is_piece)
 			{
-				clicked->shape.setFillColor(currentPlayer().getColor());
-				clicked->is_piece = true;
-				clicked->piece_type = static_cast<int>(TileType::QUEEN);
-				currentPlayer().usePiece(TileType::QUEEN);
-				nextTurn();
+				firstMove = false;
+				break;
 			}
+		}
+		
+		//if (firstMove)
+		//{
+		//	clicked->shape.setFillColor(currentPlayer().getColor());
+		//	clicked->is_piece = true;
+		//	clicked->piece_type = static_cast<int>(selected);
+		//	currentPlayer().usePiece(selected);
+		//	nextTurn();
+		//	return;
+		//}
+		auto nbrs = board.getNeighbours(*clicked);
+		bool touchesOwn = false;
+		bool touchesOpponent = false;
+		for (auto* n : nbrs)
+		{
+			if (!n->is_piece)
+				continue;
+			if (n->shape.getFillColor() == currentPlayer().getColor())
+				touchesOwn = true;
 			else
-		                std::cout << "No more Queens left for this player!\n";
-            	}
+				touchesOpponent = true;
+		}
+		bool canPlace = false;
+		if (firstMove)
+			canPlace = true;
+		else if (!touchesOwn && touchesOpponent)
+			canPlace = true;
+		else if (touchesOwn)
+			canPlace = true;
+		if (!canPlace)
+		{
+			std::cout << "Invalid move\n";
+			return;
+		}
+
+		clicked->shape.setFillColor(currentPlayer().getColor());
+		clicked->is_piece = true;
+		clicked->piece_type = static_cast<int>(selected);
+		currentPlayer().usePiece(selected);
+		nextTurn();
         }
 }
 
