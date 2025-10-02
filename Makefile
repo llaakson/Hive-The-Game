@@ -6,9 +6,9 @@ FLAGS := -Wall -Wextra -Werror -std=c++17
 
 SFML_LIBS := -lsfml-graphics -lsfml-window -lsfml-system -pthread
 
-SOURCE := main.cpp
+SOURCE := main.cpp Engine.cpp Player.cpp Board.cpp
 OBJ := $(SOURCE:.cpp=.o)
-HEADERS := Hive.hpp
+HEADERS := Hive.hpp Hex.hpp Player.hpp Board.hpp Engine.hpp Tile.hpp
 
 $(NAME) : $(OBJ)
 	$(CPP) $(FLAGS) $(OBJ) -o $(NAME) $(SFML_LIBS)

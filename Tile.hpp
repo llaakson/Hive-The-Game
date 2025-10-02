@@ -1,13 +1,18 @@
 #pragma once
 
-class Tile
+enum class TileType
 {
-	public:
-		int type;
-		int blocked = 6;
-		bool isPlaced = false;
-		Tile();
-		virtual ~Tile();
-		Player owner;
-		//add a lock - if locked, piece cannot be moved
-}
+	NONE = 0,
+	QUEEN,
+	BEETLE,
+	SPIDER,
+	ANT,
+	GRASSHOPPER
+};
+
+struct Tile
+{
+	TileType type;
+	int playerId;
+};
+

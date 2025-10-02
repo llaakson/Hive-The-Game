@@ -1,7 +1,23 @@
 #pragma once
+#include "Hive.hpp"
+#include "Board.hpp"
+#include "Player.hpp"
 
-struct Engine
+class Engine
 {
-	int turn;
-	bool isConnected;
+	public:
+		Engine(sf::RenderWindow& window);
+
+		void handleEvent(const sf::Event& event);
+		void update();
+		void draw();
+
+	private:
+		sf::RenderWindow& window;
+		Board board;
+		Player player1;
+		Player player2;
+		int currentIndex;
+		Player& currentPlayer();
+		void nextTurn();
 };
