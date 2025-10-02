@@ -21,4 +21,6 @@ class Engine
 		Player& currentPlayer();
 		void nextTurn();
 		TileType selected;
+		sf::Font font;
+		sf::Text uiText;
 };

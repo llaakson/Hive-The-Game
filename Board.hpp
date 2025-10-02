@@ -24,12 +24,12 @@ class Board
 		HexCell* getCellAt(sf::Vector2f mousePos);
 		HexCell* getCellAtAxial(int q, int r);
 		std::vector<HexCell*> getNeighbours(const HexCell& cell);
-
+		std::array<std::array<int, 10>, 5> game_matrix;
 	private:
 		int rows;
 		int cols;
 		float radius;
 		std::vector<HexCell> cells;
-		std::array<std::array<int, 10>, 5> game_matrix;
+		//std::array<std::array<int, 10>, 5> game_matrix;
 };
 
