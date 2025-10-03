@@ -1,113 +1,128 @@
-#include <SFML/Graphics.hpp>
+#include "Board.hpp"
 #include <iostream>
 #include <cmath>
-#include <array>
-#include <filesystem>
-#include <optional>
-#include <vector>
 
-class TileMap : public sf::Drawable, public sf::Transformable
+static sf::Vector2f hexToPixelOffset(int col, int row, float radius)
 {
-public:
-    bool load(const std::filesystem::path& tileset, sf::Vector2u tileSize, const int* tiles, unsigned int width, unsigned int height)
-    {
-        // load the tileset texture
-        if (!m_tileset.loadFromFile(tileset))
-            return false;
-
-        // resize the vertex array to fit the level size
-        m_vertices.setPrimitiveType(sf::PrimitiveType::Triangles);
-        m_vertices.resize(width * height * 6);
-
-        // populate the vertex array, with two triangles per tile
-        for (unsigned int i = 0; i < width; ++i)
-        {
-            for (unsigned int j = 0; j < height; ++j)
-            {
-                // get the current tile number
-                const int tileNumber = tiles[i + j * width];
-
-                // find its position in the tileset texture
-                const int tu = tileNumber % (m_tileset.getSize().x / tileSize.x);
-                const int tv = tileNumber / (m_tileset.getSize().x / tileSize.x);
-
-                // get a pointer to the triangles' vertices of the current tile
-                sf::Vertex* triangles = &m_vertices[(i + j * width) * 6];
-
-                // define the 6 corners of the two triangles
-                triangles[0].position = sf::Vector2f(i * tileSize.x, j * tileSize.y);
-                triangles[1].position = sf::Vector2f((i + 1) * tileSize.x, j * tileSize.y);
-                triangles[2].position = sf::Vector2f(i * tileSize.x, (j + 1) * tileSize.y);
-                triangles[3].position = sf::Vector2f(i * tileSize.x, (j + 1) * tileSize.y);
-                triangles[4].position = sf::Vector2f((i + 1) * tileSize.x, j * tileSize.y);
-                triangles[5].position = sf::Vector2f((i + 1) * tileSize.x, (j + 1) * tileSize.y);
-
-                // define the 6 matching texture coordinates
-                triangles[0].texCoords = sf::Vector2f(tu * tileSize.x, tv * tileSize.y);
-                triangles[1].texCoords = sf::Vector2f((tu + 1) * tileSize.x, tv * tileSize.y);
-                triangles[2].texCoords = sf::Vector2f(tu * tileSize.x, (tv + 1) * tileSize.y);
-                triangles[3].texCoords = sf::Vector2f(tu * tileSize.x, (tv + 1) * tileSize.y);
-                triangles[4].texCoords = sf::Vector2f((tu + 1) * tileSize.x, tv * tileSize.y);
-                triangles[5].texCoords = sf::Vector2f((tu + 1) * tileSize.x, (tv + 1) * tileSize.y);
-            }
-        }
-
-        return true;
-    }
-
-private:
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override
-    {
-        // apply the transform
-        states.transform *= getTransform();
-
-        // apply the tileset texture
-        states.texture = &m_tileset;
-
-        // draw the vertex array
-        target.draw(m_vertices, states);
-    }
-
-    sf::VertexArray m_vertices;
-    sf::Texture     m_tileset;
-};
-
-int main()
-{
-    // create the window
-    sf::RenderWindow window(sf::VideoMode({512, 256}), "Tilemap");
-
-    // define the level with an array of tile indices
-    constexpr std::array level = {
-        0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0,
-        1, 1, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3,
-        0, 1, 0, 0, 2, 0, 3, 3, 3, 0, 1, 1, 1, 0, 0, 0,
-        0, 1, 1, 0, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2, 0, 0,
-        0, 0, 1, 0, 3, 0, 2, 2, 0, 0, 1, 1, 1, 1, 2, 0,
-        2, 0, 1, 0, 3, 0, 2, 2, 2, 0, 1, 1, 1, 1, 1, 1,
-        0, 0, 1, 0, 3, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1,
-    };
-
-    // create the tilemap from the level definition
-    TileMap map;
-    if (!map.load("tileset.png", {32, 32}, level.data(), 16, 8))
-        return -1;
-
-    // run the main loop
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event)) 
-	{
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
-
-        // draw the map
-        window.clear();
-        window.draw(map);
-        window.display();
-    }
+	float x = radius * 1.5f * col;
+	float y = std::sqrt(3.f) * radius * (row + 0.5f * (col & 1));
+	return {x, y};
 }
 
+Board::Board(int rows, int cols, float radius, sf::RenderWindow& window) : rows(rows), cols(cols), radius(radius)
+{
+	game_matrix.fill({0});
+
+	std::vector<sf::Vector2f> positions;
+	positions.reserve(cols * rows);
+
+	for (int row = 0; row < rows; ++row)
+		for (int col = 0; col < cols; ++col)
+			positions.push_back(hexToPixelOffset(col, row, radius));
+
+	float minX = positions[0].x, maxX = positions[0].x;
+	float minY = positions[0].y, maxY = positions[0].y;
+
+	for (auto& p : positions)
+	{
+		minX = std::min(minX, p.x);
+		maxX = std::max(maxX, p.x);
+		minY = std::min(minY, p.y);
+		maxY = std::max(maxY, p.y);
+	}
+	float gridWidth = maxX - minX;
+	float gridHeight = maxY - minY;
+	
+	float offsetX = (window.getSize().x - gridWidth) / 2.f - minX;
+    	float offsetY = (window.getSize().y - gridHeight) / 2.f - minY;
+	
+	int idx = 0;
+	for (int row = 0; row < rows; ++row) 
+	{
+        	for (int col = 0; col < cols; ++col)
+		{
+			HexCell cell;
+			cell.q = col - row / 2;
+			cell.r = row;
+			cell.x = row;
+			cell.y = col;
+			
+			cell.shape = sf::CircleShape(radius, 6);
+			cell.shape.setRotation(30);
+			cell.shape.setFillColor(sf::Color::White);
+			cell.shape.setOutlineThickness(-2);
+			cell.shape.setOutlineColor(sf::Color::Black);
+
+			sf::Vector2f pos = positions[idx++];
+			pos.x += offsetX;
+			pos.y += offsetY;
+			cell.shape.setPosition(pos);
+			cells.push_back(cell);
+		}
+	}
+}
+
+void Board::draw(sf::RenderWindow& window)
+{
+	for (auto& c : cells)
+		window.draw(c.shape);
+}
+
+HexCell* Board::getCellAt(sf::Vector2f mousePos) 
+{
+	for (auto& cell : cells) 
+	{
+        	sf::Transform transform = cell.shape.getTransform();
+        	std::vector<sf::Vector2f> vertices;
+        	for (size_t i = 0; i < cell.shape.getPointCount(); ++i)
+            		vertices.push_back(transform.transformPoint(cell.shape.getPoint(i)));
+
+        	bool inside = false;
+        	for (size_t i = 0, j = vertices.size() - 1; i < vertices.size(); j = i++) 
+		{
+            		const sf::Vector2f& vi = vertices[i];
+            		const sf::Vector2f& vj = vertices[j];
+            		bool intersect = ((vi.y > mousePos.y) != (vj.y > mousePos.y)) &&
+                             (mousePos.x < (vj.x - vi.x) * (mousePos.y - vi.y) / (vj.y - vi.y) + vi.x);
+            		if (intersect)
+				inside = !inside;
+        	}
+		if (inside) 
+			return &cell;
+	}
+	return nullptr;
+}
+
+HexCell* Board::getCellAtAxial(int q, int r)
+{
+	for (auto& cell : cells)
+	{
+		if (cell.q == q && cell.r == r)
+			return &cell;
+	}
+	return nullptr;
+}
+
+std::vector<HexCell*> Board::getNeighbours(const HexCell& cell)
+{
+	std::vector<HexCell*> neighbours;
+	for (auto [dq, dr] : HEX_DIRECTIONS)
+	{
+		int nq = cell.q + dq;
+		int nr = cell.r + dr;
+		if (HexCell* neighbour = getCellAtAxial(nq, nr))
+			neighbours.push_back(neighbour);
+	}
+	return neighbours;
+}
+
+void Board::printMatrix() const
+{
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < cols; j++)
+			std::cout << game_matrix[i][j] << " ";
+		std::cout << "\n";
+	}
+	std::cout << std::endl;
+}
