@@ -60,12 +60,61 @@ Board::Board(int rows, int cols, float radius, sf::RenderWindow& window) : rows(
 			cells.push_back(cell);
 		}
 	}
+	if (!font.loadFromFile("arial.ttf")) 
+		std::cerr << "Failed to load font!\n";
+    piece_char.setFont(font);
+    piece_char.setCharacterSize(18);
+    piece_char.setFillColor(sf::Color::Red);
+}
+
+void Board::SetPieceChar(HexCell *c)
+{
+	switch(c->tile_type)
+	{
+		case TileType::QUEEN:
+			piece_char.setString("Q");
+			break;
+		case TileType::BEETLE:
+			piece_char.setString("B");
+			break;
+		case TileType::SPIDER:
+			piece_char.setString("S");
+			break;
+		case TileType::ANT:
+			piece_char.setString("A");
+			break;
+		case TileType::GRASSHOPPER:
+			piece_char.setString("G");
+			break;
+		default:
+			piece_char.setString("");
+			break;
+	}
+	sf::FloatRect hexBounds = c->shape.getGlobalBounds();
+	sf::Vector2f hexCenter(
+		hexBounds.left + hexBounds.width / 2.f,
+		hexBounds.top + hexBounds.height / 2.f
+	);
+	sf::FloatRect textBounds = piece_char.getLocalBounds();
+	piece_char.setOrigin(
+		textBounds.left + textBounds.width / 2.f,
+		textBounds.top + textBounds.height / 2.f
+	);
+	piece_char.setPosition(hexCenter);
+	piece_chars.push_back(piece_char);
+	c->charText = piece_char;
 }
 
 void Board::draw(sf::RenderWindow& window)
 {
 	for (auto& c : cells)
+	{
+		if (c.tile_type != TileType::NONE)
+			SetPieceChar(&c);
 		window.draw(c.shape);
+		window.draw(c.charText);
+	}
+	
 }
 
 HexCell* Board::init_old_cell(){

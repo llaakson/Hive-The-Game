@@ -2,6 +2,7 @@
 #include "Hive.hpp"
 #include "Board.hpp"
 #include "Player.hpp"
+#include "Tile.hpp"
 
 class Engine
 {
@@ -12,6 +13,7 @@ class Engine
 		void update();
 		void draw();
 		void clear_tile();
+		bool getDraw_chars();
 
 	private:
 		sf::RenderWindow& window;
@@ -25,4 +27,5 @@ class Engine
 		sf::Font font;
 		sf::Text uiText;
 		HexCell *old_cell;
+		bool draw_chars;
 };
