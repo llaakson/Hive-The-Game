@@ -124,10 +124,20 @@ void Engine::handleEvent(const sf::Event& event)
 		bool canPlace = false;
 		if (firstMove)
 			canPlace = true;
+		if (selected == TileType::QUEEN && currentPlayer().getTurnCount() == 0)
+			canPlace = false;
 		else if (!touchesOwn && touchesOpponent)
 			canPlace = true;
 		else if (touchesOwn)
 			canPlace = true;
+		if (!currentPlayer().isQueenPlaced() && currentPlayer().getTurnCount() == 3)
+		{
+			if (selected != TileType::QUEEN)
+			{
+				std::cout << "Invalid: time to place queen\n";
+				return;
+			}
+		}
 		if (!canPlace)
 		{
 			std::cout << "Invalid move\n";
@@ -138,7 +148,10 @@ void Engine::handleEvent(const sf::Event& event)
 		clicked->is_piece = true;
 		clicked->piece_type = static_cast<int>(selected);
 		clicked->tile_type = selected; //aaa
+		if (selected == TileType::QUEEN)
+			currentPlayer().setQueenPlaced();
 		currentPlayer().usePiece(selected);
+		currentPlayer().incrementTurn();
 		board.game_matrix[clicked->x][clicked->y] = clicked->piece_type;
 		if (old_cell && clicked->is_piece && !firstMove)
 			clear_tile();
