@@ -11,6 +11,7 @@ class Engine
 		void handleEvent(const sf::Event& event);
 		void update();
 		void draw();
+		void clear_tile();
 
 	private:
 		sf::RenderWindow& window;
@@ -23,4 +24,5 @@ class Engine
 		TileType selected;
 		sf::Font font;
 		sf::Text uiText;
+		HexCell *old_cell;
 };

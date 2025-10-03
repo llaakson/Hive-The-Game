@@ -15,6 +15,7 @@ Engine::Engine(sf::RenderWindow& window)
     uiText.setCharacterSize(18);
     uiText.setFillColor(sf::Color::Black);
     uiText.setPosition(10, 10);
+	old_cell = board.init_old_cell();
 }
 
 Player& Engine::currentPlayer() 
@@ -27,10 +28,18 @@ void Engine::nextTurn()
     currentIndex = 1 - currentIndex;
 }
 
+void Engine::clear_tile()
+{
+	board.game_matrix[old_cell->x][old_cell->y] = 0;
+	old_cell->shape.setFillColor(sf::Color::White);
+	old_cell->is_piece = false;
+
+}
 void Engine::handleEvent(const sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
 	{
+
 		switch(event.key.code)
 		{
 			case sf::Keyboard::Num1:
@@ -62,14 +71,23 @@ void Engine::handleEvent(const sf::Event& event)
 		HexCell* clicked = board.getCellAt(mousePos);
 		if (!clicked)
 			return;
+		if (clicked->is_piece && currentPlayer().getColor() != clicked->shape.getFillColor())
+		{
+			std::cout << "Click your own pieces\n";
+			return ;
+		}
 		if (clicked->is_piece)
 		{
-			std::cout << "already taken\n";
+			std::cout << "already taken and type is: :" << clicked->piece_type << std::endl;
+			selected = clicked->tile_type;
+			old_cell = clicked;
+			std::cout << "old_cell type is: :" << old_cell->piece_type << "coordinates: " << old_cell->x << " " << old_cell->y << std::endl;
 			return;
 		}
 		
-		if (!currentPlayer().hasAvailable(selected))
+		if (!currentPlayer().hasAvailable(selected) && !old_cell->is_piece)
 		{
+			selected = TileType::NONE;
 			std::cout << "not available anymore\n";
 			return;
 		}
@@ -111,8 +129,11 @@ void Engine::handleEvent(const sf::Event& event)
 		clicked->shape.setFillColor(currentPlayer().getColor());
 		clicked->is_piece = true;
 		clicked->piece_type = static_cast<int>(selected);
+		clicked->tile_type = selected; //aaa
 		currentPlayer().usePiece(selected);
 		board.game_matrix[clicked->x][clicked->y] = clicked->piece_type;
+		if (old_cell && clicked->is_piece && !firstMove)
+			clear_tile();
 		board.printMatrix();
 		nextTurn();
         }

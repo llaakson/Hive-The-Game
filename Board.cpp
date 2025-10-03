@@ -68,6 +68,10 @@ void Board::draw(sf::RenderWindow& window)
 		window.draw(c.shape);
 }
 
+HexCell* Board::init_old_cell(){
+	return &cells[0];
+} 
+
 HexCell* Board::getCellAt(sf::Vector2f mousePos) 
 {
 	for (auto& cell : cells) 

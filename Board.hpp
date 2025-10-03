@@ -25,6 +25,7 @@ class Board
 		HexCell* getCellAtAxial(int q, int r);
 		std::vector<HexCell*> getNeighbours(const HexCell& cell);
 		std::array<std::array<int, 10>, 5> game_matrix;
+		HexCell* init_old_cell();
 	private:
 		int rows;
 		int cols;
