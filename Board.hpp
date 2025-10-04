@@ -7,12 +7,14 @@
 
 // --- Neighbor Directions ---
 // Axial directions for flat-topped hexes
-const std::array<std::pair<int,int>, 6> HEX_DIRECTIONS 
-{{
-    {+1, 0}, {+1, -1}, {0, -1},
-    {-1, 0}, {-1, +1}, {0, +1}
+// now handles column offset
+const std::array<std::pair<int,int>,6> EVEN_COL_OFFSETS {{
+    {+1,0},{0,-1},{-1,-1},{-1,0},{-1,+1},{0,+1}
 }};
 
+const std::array<std::pair<int,int>,6> ODD_COL_OFFSETS {{
+    {+1,0},{+1,-1},{0,-1},{-1,0},{0,+1},{+1,+1}
+}};
 
 class Board
 {

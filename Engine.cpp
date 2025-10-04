@@ -35,6 +35,7 @@ void Engine::clear_tile()
 	old_cell->is_piece = false;
 
 }
+
 void Engine::handleEvent(const sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
@@ -84,8 +85,9 @@ void Engine::handleEvent(const sf::Event& event)
 			std::cout << "old_cell type is: :" << old_cell->piece_type << "coordinates: " << old_cell->x << " " << old_cell->y << std::endl;
 			return;
 		}
-		
-		if (!currentPlayer().hasAvailable(selected) && !old_cell->is_piece)
+		bool hasOldPiece = (old_cell != nullptr && old_cell->is_piece);
+
+		if (!currentPlayer().hasAvailable(selected) && !hasOldPiece)
 		{
 			selected = TileType::NONE;
 			std::cout << "not available anymore\n";
@@ -113,27 +115,35 @@ void Engine::handleEvent(const sf::Event& event)
 			else
 				touchesOpponent = true;
 		}
-		bool canPlace = false;
-		if (firstMove)
-			canPlace = true;
-		if (selected == TileType::QUEEN && currentPlayer().getTurnCount() == 0)
-			canPlace = false;
-		else if (!touchesOwn && touchesOpponent)
-			canPlace = true;
-		else if (touchesOwn)
-			canPlace = true;
-		if (!currentPlayer().isQueenPlaced() && currentPlayer().getTurnCount() == 3)
+
+		if (selected == TileType::QUEEN && currentPlayer().getTurnCount() == 0) 
 		{
-			if (selected != TileType::QUEEN)
-			{
-				std::cout << "Invalid: time to place queen\n";
-				return;
-			}
+            		std::cout << "You cannot place the Queen on your first placement.\n";
+            		return;
 		}
+        if (!currentPlayer().isQueenPlaced() && currentPlayer().getTurnCount() == 3) 
+		{
+            		if (selected != TileType::QUEEN) 
+			{
+                		std::cout << "Rule: you must place your Queen this turn.\n";
+                		return;
+            		}
+        	}
+
+        bool canPlace = false;
+		if (firstMove)
+            		canPlace = true;
+		else if (hasOldPiece)
+			canPlace = touchesOwn || touchesOpponent;
+        else if (currentPlayer().getTurnCount() == 0)
+            canPlace = touchesOpponent;
+		else
+            canPlace = touchesOwn && !touchesOpponent;
+
 		if (!canPlace)
 		{
-			std::cout << "Invalid move\n";
-			return;
+            		std::cout << "Invalid move (placement adjacency rule failed).\n";
+            		return;
 		}
 
 		clicked->shape.setFillColor(currentPlayer().getColor());
@@ -145,10 +155,11 @@ void Engine::handleEvent(const sf::Event& event)
 		currentPlayer().usePiece(selected);
 		currentPlayer().incrementTurn();
 		board.game_matrix[clicked->x][clicked->y] = clicked->piece_type;
-		if (old_cell && clicked->is_piece && !firstMove)
+		if (hasOldPiece && !firstMove)
 			clear_tile();
 		board.printMatrix();
 		nextTurn();
+
         }
 }
 

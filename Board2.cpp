@@ -109,15 +109,22 @@ HexCell* Board::getCellAtAxial(int q, int r)
 
 std::vector<HexCell*> Board::getNeighbours(const HexCell& cell)
 {
-	std::vector<HexCell*> neighbours;
-	for (auto [dq, dr] : HEX_DIRECTIONS)
-	{
-		int nq = cell.q + dq;
-		int nr = cell.r + dr;
-		if (HexCell* neighbour = getCellAtAxial(nq, nr))
-			neighbours.push_back(neighbour);
-	}
-	return neighbours;
+    std::vector<HexCell*> neighbours;
+
+    const auto& offsets = (cell.y % 2 == 0) ? EVEN_COL_OFFSETS : ODD_COL_OFFSETS;
+
+    for (auto [dx, dy] : offsets)
+    {
+        int nx = cell.x + dx; // row
+        int ny = cell.y + dy; // col
+
+        if (nx >= 0 && nx < rows && ny >= 0 && ny < cols)
+        {
+            neighbours.push_back(&cells[nx * cols + ny]);
+        }
+    }
+
+    return neighbours;
 }
 
 void Board::printMatrix() const
