@@ -28,11 +28,15 @@ class Board
 		std::vector<HexCell*> getNeighbours(const HexCell& cell);
 		std::array<std::array<int, 10>, 5> game_matrix;
 		HexCell* init_old_cell();
+		void SetPieceChar(HexCell *c);
 	private:
 		int rows;
 		int cols;
 		float radius;
 		std::vector<HexCell> cells;
 		//std::array<std::array<int, 10>, 5> game_matrix;
+		sf::Text piece_char;
+		sf::Font font;
+		std::vector<sf::Text> piece_chars;
 };
 

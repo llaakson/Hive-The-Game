@@ -20,4 +20,6 @@ struct HexCell
 	//matrix coordinates for grid indexing
 	int x;
 	int y;
+
+	sf::Text charText;
 };

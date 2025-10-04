@@ -7,7 +7,8 @@ Engine::Engine(sf::RenderWindow& window)
 	player1(sf::Color::Blue),
 	player2(sf::Color::Green),
 	currentIndex(0),
-	selected(TileType::QUEEN)
+	selected(TileType::QUEEN),
+	draw_chars(false)
 {
 	if (!font.loadFromFile("arial.ttf")) 
 		std::cerr << "Failed to load font!\n";
@@ -23,9 +24,14 @@ Player& Engine::currentPlayer()
     return (currentIndex == 0 ? player1 : player2);
 }
 
+bool Engine::getDraw_chars(){
+	return draw_chars;
+}
+
 void Engine::nextTurn() 
 {
     currentIndex = 1 - currentIndex;
+	draw_chars = true; 
 }
 
 void Engine::clear_tile()
@@ -33,6 +39,8 @@ void Engine::clear_tile()
 	board.game_matrix[old_cell->x][old_cell->y] = 0;
 	old_cell->shape.setFillColor(sf::Color::White);
 	old_cell->is_piece = false;
+	old_cell->charText.setString("");
+	old_cell->tile_type = TileType::NONE;
 
 }
 
