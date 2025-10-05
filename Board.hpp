@@ -33,6 +33,7 @@ class Board
 		void SetPieceChar(HexCell *c);
 		bool isOneHive();
 
+		void Side_board();
 	private:
 		int rows;
 		int cols;
