@@ -132,10 +132,47 @@ void Board::draw(sf::RenderWindow& window)
 	{
 		if (c.tile_type != TileType::NONE)
 			SetPieceChar(&c);
+		if (c.is_highlighted)
+		{
+			c.shape.setOutlineThickness(2.f);
+			c.shape.setOutlineColor(sf::Color::Magenta);
+		}
+		else
+		{
+			c.shape.setOutlineThickness(1.f);
+			c.shape.setOutlineColor(sf::Color::Black);
+		}
 		window.draw(c.shape);
 		window.draw(c.charText);
 	}
+}
+
+void Board::highlight(HexCell* cell)
+{
+	if (cell)
+		cell->is_highlighted = true;
+}
+
+void Board::clearHighlight()
+{
+	for (auto& c : cells)
+		c.is_highlighted = false;
+}
+
+std::vector<HexCell*> Board::getPossibleMoves(HexCell* piece)
+{
+	std::vector<HexCell*> possible;
+	if (!piece | !piece->is_piece)
+		return possible;
 	
+	auto nbrs = getNeighbours(*piece);
+	for (auto* n : nbrs)
+	{
+		if (n->is_piece)
+			continue;
+		possible.push_back(n);
+	}
+	return possible;
 }
 
 HexCell* Board::init_old_cell(){

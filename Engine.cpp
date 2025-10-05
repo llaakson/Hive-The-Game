@@ -109,6 +109,10 @@ void Engine::handleEvent(const sf::Event& event)
 			selected = clicked->tile_type;
 			old_cell = clicked;
 			std::cout << "old_cell type is: :" << old_cell->piece_type << "coordinates: " << old_cell->x << " " << old_cell->y << std::endl;
+			board.clearHighlight();
+			auto possibleMoves = board.getPossibleMoves(clicked);
+			for (auto *move : possibleMoves)
+				board.highlight(move);
 			return;
 		}
 		bool hasOldPiece = (old_cell != nullptr && old_cell->is_piece);
@@ -190,6 +194,7 @@ void Engine::handleEvent(const sf::Event& event)
 		board.game_matrix[clicked->x][clicked->y] = clicked->piece_type;
 		if (hasOldPiece && !firstMove)
 			clear_tile();
+		board.clearHighlight();
 		board.printMatrix();
 		nextTurn();
 

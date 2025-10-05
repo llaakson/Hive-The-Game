@@ -32,14 +32,16 @@ class Board
 		HexCell* init_old_cell();
 		void SetPieceChar(HexCell *c);
 		bool isOneHive();
-
 		void Side_board();
+		void highlight(HexCell* cell);
+		void clearHighlight();
+		std::vector<HexCell*> getPossibleMoves(HexCell* piece);
+
 	private:
 		int rows;
 		int cols;
 		float radius;
 		std::vector<HexCell> cells;
-		//std::array<std::array<int, 10>, 5> game_matrix;
 		sf::Text piece_char;
 		sf::Font font;
 		std::vector<sf::Text> piece_chars;

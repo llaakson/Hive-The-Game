@@ -13,6 +13,7 @@ struct HexCell
 	bool is_piece = false;
 	bool permanent = false;
 	bool selected = false;
+	bool is_highlighted = false;
 
 	int piece_type = 0;
 	TileType tile_type; //This two are essentially the same thing??
