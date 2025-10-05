@@ -4,6 +4,8 @@
 #include <array>
 #include <unordered_map>
 #include <vector>
+#include <unordered_set>
+#include <queue>
 
 // --- Neighbor Directions ---
 // Axial directions for flat-topped hexes
@@ -29,6 +31,8 @@ class Board
 		std::array<std::array<int, 10>, 5> game_matrix;
 		HexCell* init_old_cell();
 		void SetPieceChar(HexCell *c);
+		bool isOneHive();
+
 	private:
 		int rows;
 		int cols;

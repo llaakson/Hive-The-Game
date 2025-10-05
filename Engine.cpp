@@ -44,6 +44,24 @@ void Engine::clear_tile()
 
 }
 
+//temporary remove the piece, call BSF function from Board to check if hive remains one
+bool Engine::oneHive(HexCell* cell)
+{
+    if (!cell->is_piece) 
+		return true;
+
+    TileType temp = cell->tile_type;
+    cell->is_piece = false;
+    cell->tile_type = TileType::NONE;
+
+    bool connected = board.isOneHive();
+
+    cell->is_piece = true;
+    cell->tile_type = temp;
+
+    return connected;
+}
+
 void Engine::handleEvent(const sf::Event& event)
 {
 	if (event.type == sf::Event::KeyPressed)
@@ -147,6 +165,13 @@ void Engine::handleEvent(const sf::Event& event)
             canPlace = touchesOpponent;
 		else
             canPlace = touchesOwn && !touchesOpponent;
+		
+		if (!oneHive(old_cell))
+		{
+			canPlace = false;
+			std::cout << "Move breaks the Hive!\n";
+			return;
+		}
 
 		if (!canPlace)
 		{

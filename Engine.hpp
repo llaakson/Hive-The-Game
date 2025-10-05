@@ -14,6 +14,7 @@ class Engine
 		void draw();
 		void clear_tile();
 		bool getDraw_chars();
+		bool oneHive(HexCell* cell);
 
 	private:
 		sf::RenderWindow& window;

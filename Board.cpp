@@ -186,3 +186,38 @@ void Board::printMatrix() const
 	}
 	std::cout << std::endl;
 }
+
+//bfs to check if hive remains connected
+bool Board::isOneHive()
+{
+	std::vector<const HexCell*> occupied;
+	for (const auto& cell : cells)
+	{
+		if (cell.is_piece)
+			occupied.push_back(&cell);
+	}
+	if (occupied.empty())
+		return true;
+	
+	std::queue<const HexCell*> queued;
+	std::unordered_set<const HexCell*> checked;
+
+	queued.push(occupied[0]);
+	checked.insert(occupied[0]);
+
+	while (!queued.empty())
+	{
+		const HexCell *current = queued.front();
+		queued.pop();
+		for (auto& n : getNeighbours(*current))
+		{
+			if (n->is_piece && checked.find(n) == checked.end())
+			{
+				checked.insert(n);
+				queued.push(n);
+			}
+		}
+	}
+	return checked.size() == occupied.size();
+}
+
