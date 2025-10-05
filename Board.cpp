@@ -132,18 +132,15 @@ void Board::draw(sf::RenderWindow& window)
 	{
 		if (c.tile_type != TileType::NONE)
 			SetPieceChar(&c);
-		if (c.is_highlighted)
-		{
-			c.shape.setOutlineThickness(2.f);
-			c.shape.setOutlineColor(sf::Color::Magenta);
-		}
-		else
-		{
-			c.shape.setOutlineThickness(1.f);
-			c.shape.setOutlineColor(sf::Color::Black);
-		}
 		window.draw(c.shape);
 		window.draw(c.charText);
+		if (c.is_highlighted)
+		{
+			sf::CircleShape shadow = c.shape;
+			shadow.setFillColor(sf::Color(128, 128, 128, 75));
+			shadow.setOutlineThickness(0.f);
+			window.draw(shadow);
+		}
 	}
 }
 
