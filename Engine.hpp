@@ -14,7 +14,6 @@ class Engine
 		void draw();
 		void clear_tile();
 		bool getDraw_chars();
-
 	private:
 		sf::RenderWindow& window;
 		Board board;

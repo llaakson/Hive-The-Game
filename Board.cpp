@@ -60,11 +60,32 @@ Board::Board(int rows, int cols, float radius, sf::RenderWindow& window) : rows(
 			cells.push_back(cell);
 		}
 	}
+	Side_board();
 	if (!font.loadFromFile("arial.ttf")) 
 		std::cerr << "Failed to load font!\n";
     piece_char.setFont(font);
     piece_char.setCharacterSize(18);
     piece_char.setFillColor(sf::Color::Red);
+}
+
+void Board::Side_board(){
+	for (int i = 0; i < 4; i++)
+	{
+		HexCell cell;
+		cell.shape = sf::CircleShape(radius, 6);
+		sf::Vector2f pos;
+		pos.x = 30;
+		pos.y = 10 + i * radius * 2;
+		cell.shape.setPosition(pos);
+		cell.shape.setRotation(30);
+		cell.shape.setFillColor(sf::Color::White);
+		cell.shape.setOutlineThickness(-2);
+		cell.shape.setOutlineColor(sf::Color::Red);
+		//cell.shape.setFillColor(engine.currentPlayer().getColor());
+		cells.push_back(cell);
+		std::cout << "made board piece" << std::endl;
+	}
+
 }
 
 void Board::SetPieceChar(HexCell *c)
